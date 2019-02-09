@@ -4,7 +4,7 @@ mod libinput;
 
 fn main() {
     println!("Hello, world!");
-    let mut ctx = libinput::init();
+    let mut ctx = libinput::init().unwrap();
     loop {
         ctx.ready.recv().unwrap();
         ctx.libinput.dispatch().unwrap();

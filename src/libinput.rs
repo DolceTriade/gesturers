@@ -33,10 +33,10 @@ pub struct Context {
     pub ready: channel::Receiver<()>,
 }
 
-pub fn init() -> Context {
-    let udev = udev::Context::new().unwrap();
+pub fn init() -> Result<Context, String> {
+    let udev = udev::Context::new().map_err(|err| format!("Error creating udev context: {:?}", err))?;
     let mut libinput = input::Libinput::new_from_udev(LibinputInterface {}, &udev);
-    libinput.udev_assign_seat("seat0").unwrap();
+    libinput.udev_assign_seat("seat0").map_err(|err| format!("Error assigning udev seat: {:?}", err))?;
     let (s, r) = channel::unbounded();
     let fd = libinput.as_raw_fd();
     thread::spawn(move || {
@@ -48,5 +48,5 @@ pub fn init() -> Context {
             }
         }
     });
-    return Context { libinput: libinput, ready: r };
+    return Ok(Context { libinput: libinput, ready: r });
 }
