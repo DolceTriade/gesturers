@@ -1,0 +1,12 @@
+[package]
+name = "gesturers"
+version = "0.1.0"
+authors = ["dolcetriade <vcelestialragev@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+udev = "0.2.0"
+input = "0.4.1"
+nix = "0.13.0"
+libc = "0.2.48"
+crossbeam = "0.7.1"
