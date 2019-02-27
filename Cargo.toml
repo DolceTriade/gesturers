@@ -10,3 +10,4 @@ input = "0.4.1"
 nix = "0.13.0"
 libc = "0.2.48"
 crossbeam = "0.7.1"
+circgr = { path = "../rust/circgr", version = "0.1.0" }

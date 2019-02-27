@@ -4,10 +4,10 @@ extern crate libc;
 extern crate udev;
 
 use crossbeam::channel;
+use std::os::unix::io::AsRawFd;
 use std::os::unix::io::RawFd;
 use std::path::Path;
 use std::thread;
-use std::os::unix::io::AsRawFd;
 
 struct LibinputInterface {}
 
@@ -34,9 +34,12 @@ pub struct Context {
 }
 
 pub fn init() -> Result<Context, String> {
-    let udev = udev::Context::new().map_err(|err| format!("Error creating udev context: {:?}", err))?;
+    let udev =
+        udev::Context::new().map_err(|err| format!("Error creating udev context: {:?}", err))?;
     let mut libinput = input::Libinput::new_from_udev(LibinputInterface {}, &udev);
-    libinput.udev_assign_seat("seat0").map_err(|err| format!("Error assigning udev seat: {:?}", err))?;
+    libinput
+        .udev_assign_seat("seat0")
+        .map_err(|err| format!("Error assigning udev seat: {:?}", err))?;
     let (s, r) = channel::unbounded();
     let fd = libinput.as_raw_fd();
     thread::spawn(move || {
@@ -48,5 +51,8 @@ pub fn init() -> Result<Context, String> {
             }
         }
     });
-    return Ok(Context { libinput: libinput, ready: r });
+    return Ok(Context {
+        libinput: libinput,
+        ready: r,
+    });
 }
