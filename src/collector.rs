@@ -1,17 +1,23 @@
 use circgr::gesture::{Gesture, Point, PointBuilder};
 use input::event::touch::{TouchEvent, TouchEventPosition, TouchEventSlot, TouchEventTrait};
 use std::collections::{HashMap, HashSet};
+use crossbeam::channel;
 
 const RESAMPLE_SIZE: u32 = 64;
 
 pub struct Collector {
+    pub gesture_listener: channel::Receiver<Gesture>,
+    sender: channel::Sender<Gesture>,
     raw_input: HashMap<u32, Vec<Point>>,
     fingers: HashSet<u32>,
 }
 
 impl Collector {
     pub fn new() -> Collector {
+        let (s, r) = channel::unbounded();
         Collector {
+            gesture_listener: r,
+            sender: s,
             raw_input: HashMap::new(),
             fingers: HashSet::new(),
         }
@@ -41,9 +47,9 @@ impl Collector {
         }
 
         if self.fingers.is_empty() && !self.raw_input.is_empty() {
-            println!("Got gesture!");
             let gesture = Gesture::new(&self.raw_input, RESAMPLE_SIZE);
             self.raw_input.clear();
+            self.sender.send(gesture);
         }
     }
 }
