@@ -33,16 +33,18 @@ fn main() {
         _ => Mode::Recognize,
     };
 
-    thread::spawn(move || loop {
+    thread::spawn(move || {
         let mut ctx = libinput::init().unwrap();
-        ctx.ready.recv().unwrap();
-        ctx.libinput.dispatch().unwrap();
-        for event in &mut ctx.libinput {
-            match event {
-                input::Event::Touch(touch_event) => {
-                    collector.handle_event(&touch_event);
+        loop {
+            ctx.ready.recv().unwrap();
+            ctx.libinput.dispatch().unwrap();
+            for event in &mut ctx.libinput {
+                match event {
+                    input::Event::Touch(touch_event) => {
+                        collector.handle_event(&touch_event);
+                    }
+                    _ => {}
                 }
-                _ => {}
             }
         }
     });
