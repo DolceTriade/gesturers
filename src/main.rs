@@ -1,17 +1,15 @@
+extern crate bincode;
 extern crate circgr;
 extern crate clap;
 extern crate input;
 
 use clap::{App, Arg, SubCommand};
+use handler::Mode;
 use std::thread;
 
 mod collector;
+mod handler;
 mod libinput;
-
-enum Mode {
-    Record,
-    Normal,
-}
 
 fn main() {
     let matches = App::new("GestureRS")
@@ -22,27 +20,21 @@ fn main() {
                 .arg(
                     Arg::with_name("name")
                         .short("n")
+                        .value_name("NAME")
                         .help("Name for the recorded gesture")
                         .required(true),
                 ),
         )
         .get_matches();
-    let mut classifier = circgr::classifier::Classifier::new();
     let mut collector = collector::Collector::new();
-    let mut ctx = libinput::init().unwrap();
     let listener = collector.gesture_listener.clone();
     let mode = match matches.subcommand_matches("record") {
-        Some(_) => Mode::Record,
-        _ => Mode::Normal,
+        Some(m) => Mode::Record(m.value_of("name").unwrap().to_string()),
+        _ => Mode::Recognize,
     };
-    if mode ==
-    thread::spawn(move || {
-        let gesture = listener.recv().unwrap();
-        if mode == Mode::Record
-        println!("Got gesture: {:?}", &gesture);
-    });
 
-    loop {
+    thread::spawn(move || loop {
+        let mut ctx = libinput::init().unwrap();
         ctx.ready.recv().unwrap();
         ctx.libinput.dispatch().unwrap();
         for event in &mut ctx.libinput {
@@ -53,5 +45,8 @@ fn main() {
                 _ => {}
             }
         }
-    }
+    });
+
+    let mut handler = handler::Handler::new(mode, listener, std::path::Path::new("/tmp/gestures"));
+    handler.run();
 }
