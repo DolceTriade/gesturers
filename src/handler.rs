@@ -20,10 +20,12 @@ impl Handler {
     pub fn new(mode: Mode, listener: channel::Receiver<Gesture>, template_path: &Path) -> Self {
         let mut classifier = Classifier::new();
         if mode == Mode::Recognize {
+            println!("Adding templates...");
             let dir = std::fs::read_dir(&template_path)
                 .expect(&format!("Error reading {:?}", &template_path));
             for entry_or in dir {
                 let entry = entry_or.expect("Error reading entry");
+                println!("Checking {:?}", entry);
                 let bytes = std::fs::read(entry.path())
                     .expect(&format!("Error reading {:?}", entry.path()));
                 let gesture_or: bincode::Result<Gesture> = bincode::deserialize(&bytes);
@@ -45,13 +47,15 @@ impl Handler {
 
     pub fn run(&mut self) {
         loop {
-            let gesture = &self.gesture_listener.recv().unwrap();
+            let mut gesture = self.gesture_listener.recv().unwrap();
             match &self.mode {
                 Mode::Record(name) => {
+                    gesture.name = name.to_string();
                     let mut path = std::path::PathBuf::new();
                     path.push(&self.template_path);
                     path.push(name);
                     std::fs::write(path.as_path(), bincode::serialize(&gesture).unwrap()).unwrap();
+                    break;
                 }
                 _ => {
                     println!("Doing stuff: {:?}", &self.classifier.classify(&gesture));
