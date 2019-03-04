@@ -3,6 +3,7 @@ extern crate circgr;
 extern crate clap;
 extern crate dirs;
 extern crate input;
+extern crate toml;
 
 use clap::{App, Arg, SubCommand};
 use handler::Mode;
@@ -65,16 +66,20 @@ fn main() {
         }
     };
 
-    if ! config_path.exists() {
-        std::fs::create_dir_all(&config_path).expect(&format!("Unable to create path: {:?}", &config_path));
+    if !config_path.exists() {
+        std::fs::create_dir_all(&config_path)
+            .expect(&format!("Unable to create path: {:?}", &config_path));
     }
-    if ! config_path.is_dir() {
+    if !config_path.is_dir() {
         eprintln!("config path must be a directory!");
         panic!();
     }
     let mut gesture_dir = config_path.clone();
     gesture_dir.push("gestures");
-    std::fs::create_dir_all(&gesture_dir).expect(&format!("Unable to create gesture path: {:?}", &gesture_dir));
+    std::fs::create_dir_all(&gesture_dir).expect(&format!(
+        "Unable to create gesture path: {:?}",
+        &gesture_dir
+    ));
 
     let mut handler = handler::Handler::new(mode, listener, &config_path);
     handler.run();
