@@ -10,7 +10,7 @@ input = "0.4.1"
 nix = "0.13.0"
 libc = "0.2.48"
 crossbeam = "0.7.1"
-circgr = { path = "../rust/circgr", version = "0.1.0" }
+circgr = { path = "circgr", version = "0.1.0" }
 clap = "2.32.0"
 serde = "1.0.88"
 bincode = "1.1.2"

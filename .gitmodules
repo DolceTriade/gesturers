@@ -1,0 +1,3 @@
+[submodule "circgr"]
+	path = circgr
+	url = https://github.com/DolceTriade/circgr.git
