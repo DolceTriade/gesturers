@@ -1,6 +1,7 @@
 extern crate bincode;
 extern crate circgr;
 extern crate clap;
+extern crate dirs;
 extern crate input;
 
 use clap::{App, Arg, SubCommand};
@@ -14,6 +15,12 @@ mod libinput;
 fn main() {
     let matches = App::new("GestureRS")
         .version("0.1.0")
+        .arg(
+            Arg::with_name("conf_path")
+                .short("c")
+                .value_name("CONFIG_PATH")
+                .help("Config path for actions and gestures."),
+        )
         .subcommand(
             SubCommand::with_name("record")
                 .about("Record a new gesture")
@@ -49,6 +56,26 @@ fn main() {
         }
     });
 
-    let mut handler = handler::Handler::new(mode, listener, std::path::Path::new("/tmp/gestures"));
+    let config_path = match matches.value_of("conf_path") {
+        Some(path) => std::path::PathBuf::from(path),
+        None => {
+            let mut path = dirs::config_dir().unwrap();
+            path.push("gesturers");
+            path
+        }
+    };
+
+    if ! config_path.exists() {
+        std::fs::create_dir_all(&config_path).expect(&format!("Unable to create path: {:?}", &config_path));
+    }
+    if ! config_path.is_dir() {
+        eprintln!("config path must be a directory!");
+        panic!();
+    }
+    let mut gesture_dir = config_path.clone();
+    gesture_dir.push("gestures");
+    std::fs::create_dir_all(&gesture_dir).expect(&format!("Unable to create gesture path: {:?}", &gesture_dir));
+
+    let mut handler = handler::Handler::new(mode, listener, &config_path);
     handler.run();
 }

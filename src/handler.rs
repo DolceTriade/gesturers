@@ -17,12 +17,14 @@ pub struct Handler {
 }
 
 impl Handler {
-    pub fn new(mode: Mode, listener: channel::Receiver<Gesture>, template_path: &Path) -> Self {
+    pub fn new(mode: Mode, listener: channel::Receiver<Gesture>, config_path: &Path) -> Self {
         let mut classifier = Classifier::new();
+        let mut gesture_path = PathBuf::from(config_path);
+        gesture_path.push("gestures");
         if mode == Mode::Recognize {
             println!("Adding templates...");
-            let dir = std::fs::read_dir(&template_path)
-                .expect(&format!("Error reading {:?}", &template_path));
+            let dir = std::fs::read_dir(&gesture_path)
+                .expect(&format!("Error reading {:?}", &gesture_path));
             for entry_or in dir {
                 let entry = entry_or.expect("Error reading entry");
                 println!("Checking {:?}", entry);
@@ -41,7 +43,7 @@ impl Handler {
             mode: mode,
             gesture_listener: listener,
             classifier: classifier,
-            template_path: template_path.to_path_buf(),
+            template_path: gesture_path,
         }
     }
 

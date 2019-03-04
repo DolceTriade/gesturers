@@ -14,3 +14,4 @@ circgr = { path = "../rust/circgr", version = "0.1.0" }
 clap = "2.32.0"
 serde = "1.0.88"
 bincode = "1.1.2"
+dirs = "1.0.5"
