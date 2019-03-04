@@ -2,7 +2,7 @@ extern crate bincode;
 extern crate circgr;
 extern crate clap;
 extern crate dirs;
-extern crate input;
+extern crate libinput;
 extern crate toml;
 
 use clap::{App, Arg, SubCommand};
@@ -11,7 +11,6 @@ use std::thread;
 
 mod collector;
 mod handler;
-mod libinput;
 
 fn main() {
     let matches = App::new("GestureRS")

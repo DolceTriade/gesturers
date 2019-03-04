@@ -16,3 +16,4 @@ serde = "1.0.88"
 bincode = "1.1.2"
 dirs = "1.0.5"
 toml = "0.4.10"
+libinput = { path = "libinput", version = "0.1.0" }
