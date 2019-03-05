@@ -5,21 +5,20 @@ use std::collections::{HashMap, HashSet};
 
 const RESAMPLE_SIZE: u32 = 64;
 
-pub struct Collector {
-    pub gesture_listener: channel::Receiver<Gesture>,
+pub struct Collector<'s> {
     sender: channel::Sender<Gesture>,
     raw_input: HashMap<u32, Vec<Point>>,
     fingers: HashSet<u32>,
+    screen: &'s wlib::Screen<'s>,
 }
 
-impl Collector {
-    pub fn new() -> Collector {
-        let (s, r) = channel::unbounded();
+impl<'s> Collector<'s> {
+    pub fn new(screen: &'s wlib::Screen, sender: channel::Sender<Gesture>) -> Self {
         Collector {
-            gesture_listener: r,
-            sender: s,
+            sender: sender,
             raw_input: HashMap::new(),
             fingers: HashSet::new(),
+            screen: screen,
         }
     }
     pub fn handle_event(&mut self, event: &TouchEvent) {
@@ -33,7 +32,7 @@ impl Collector {
                 self.raw_input
                     .entry(id)
                     .or_insert(Vec::new())
-                    .push(event_position(down));
+                    .push(event_position(self.screen, down));
             }
             TouchEvent::Motion(motion) => {
                 let id = motion.slot().unwrap_or(1);
@@ -41,7 +40,7 @@ impl Collector {
                 self.raw_input
                     .entry(id)
                     .or_insert(Vec::new())
-                    .push(event_position(motion));
+                    .push(event_position(self.screen, motion));
             }
             _ => {}
         }
@@ -54,10 +53,13 @@ impl Collector {
     }
 }
 
-fn event_position<T: TouchEventPosition + TouchEventTrait>(event: &T) -> Point {
+fn event_position<'s, T: TouchEventPosition + TouchEventTrait>(
+    screen: &'s wlib::Screen,
+    event: &T,
+) -> Point {
     PointBuilder::default()
-        .x(event.x())
-        .y(event.y())
+        .x(event.x_transformed(screen.width()))
+        .y(event.y_transformed(screen.height()))
         .timestamp(event.time_usec())
         .build()
         .unwrap()

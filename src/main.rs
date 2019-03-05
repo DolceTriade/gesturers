@@ -4,6 +4,7 @@ extern crate clap;
 extern crate dirs;
 extern crate libinput;
 extern crate toml;
+extern crate wlib;
 
 use clap::{App, Arg, SubCommand};
 use handler::Mode;
@@ -33,14 +34,17 @@ fn main() {
                 ),
         )
         .get_matches();
-    let mut collector = collector::Collector::new();
-    let listener = collector.gesture_listener.clone();
+    let (sender, listener) = crossbeam::channel::unbounded();
     let mode = match matches.subcommand_matches("record") {
         Some(m) => Mode::Record(m.value_of("name").unwrap().to_string()),
         _ => Mode::Recognize,
     };
 
     thread::spawn(move || {
+        let display = wlib::Display::open().expect("Error openning X11 display");
+        let screen = display.screen().expect("Error getting screen from display");
+        let mut collector = collector::Collector::new(&screen, sender);
+
         let mut ctx = libinput::init().unwrap();
         loop {
             ctx.ready.recv().unwrap();
