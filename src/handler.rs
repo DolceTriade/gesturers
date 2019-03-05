@@ -1,6 +1,7 @@
 use circgr::classifier::Classifier;
 use circgr::gesture::Gesture;
 use crossbeam::channel;
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process;
@@ -11,12 +12,18 @@ pub enum Mode {
     Recognize,
 }
 
+#[derive(Debug, Deserialize)]
+struct Actions {
+    default: Option<String>,
+    app: Option<HashMap<String, String>>,
+}
+
 pub struct Handler {
     mode: Mode,
     gesture_listener: channel::Receiver<Gesture>,
     classifier: Classifier,
     template_path: PathBuf,
-    actions: HashMap<String, String>,
+    actions: HashMap<String, Actions>,
 }
 
 impl Handler {
@@ -62,6 +69,8 @@ impl Handler {
 
     pub fn run(&mut self) {
         const PER_TRACE_THRESHOLD: usize = 100;
+        let empty = HashMap::new();
+        let display = wlib::Display::open().unwrap();
         loop {
             let mut gesture = self.gesture_listener.recv().unwrap();
             match &self.mode {
@@ -75,25 +84,45 @@ impl Handler {
                 }
                 _ => match &self.classifier.classify(&gesture) {
                     Some((name, score)) => {
-                        println!("Got gesture {} with score {}", &name, &score);
+                        let window = get_window_at_cursor(&display);
+                        println!(
+                            "Got gesture {} with score {} in {:?}",
+                            &name, &score, &window
+                        );
                         if *score > PER_TRACE_THRESHOLD * gesture.traces.len() {
                             println!("Score too low...");
                             continue;
                         }
+                        println!("Gesture happeened in {:?}", &window);
+                        let mut action = "".to_string();
                         match self.actions.get(name) {
-                            Some(action) => {
-                                println!("Running: {}", &action);
-                                match process::Command::new("/bin/sh")
-                                    .args(&["-c", action])
-                                    .spawn()
+                            Some(actions) => {
+                                match actions
+                                    .app
+                                    .as_ref()
+                                    .unwrap_or(&empty)
+                                    .get(&window.unwrap_or("".to_string()))
                                 {
-                                    Ok(_) => {}
-                                    Err(err) => {
-                                        println!("Error executing \"{}\": {:?}", &action, &err);
-                                    }
+                                    Some(a) => action = a.to_string(),
+                                    None => match &actions.default {
+                                        Some(a) => action = a.to_string(),
+                                        None => {}
+                                    },
                                 }
                             }
                             _ => {}
+                        }
+                        if !action.is_empty() {
+                            println!("Running: {}", &action);
+                            match process::Command::new("/bin/sh")
+                                .args(&["-c", &action])
+                                .spawn()
+                            {
+                                Ok(_) => {}
+                                Err(err) => {
+                                    println!("Error executing \"{}\": {:?}", &action, &err);
+                                }
+                            }
                         }
                     }
                     _ => {}
@@ -101,4 +130,9 @@ impl Handler {
             }
         }
     }
+}
+
+fn get_window_at_cursor(display: &wlib::Display) -> Option<String> {
+    let w = display.focus().unwrap().unwrap();
+    w.class_name()
 }

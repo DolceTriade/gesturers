@@ -360,6 +360,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "libinput"
 version = "0.1.0"
 dependencies = [
+ "clap 2.32.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "crossbeam 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "input 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.49 (registry+https://github.com/rust-lang/crates.io-index)",
