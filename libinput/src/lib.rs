@@ -34,9 +34,7 @@ pub struct Context {
 }
 
 pub fn init() -> Result<Context, String> {
-    let udev =
-        udev::Context::new().map_err(|err| format!("Error creating udev context: {:?}", err))?;
-    let mut libinput = input::Libinput::new_from_udev(LibinputInterface {}, &udev);
+    let mut libinput = input::Libinput::new_with_udev(LibinputInterface {});
     libinput
         .udev_assign_seat("seat0")
         .map_err(|err| format!("Error assigning udev seat: {:?}", err))?;
